@@ -1,7 +1,7 @@
 import random
 
 # /nekoコマンド
-async def do(message):
+async def exec(message):
 
     dice = random.randint(1, 100)
 

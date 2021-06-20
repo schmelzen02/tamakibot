@@ -1,10 +1,9 @@
 import discord
 import os
+import re
 
 import neko
-import neko_help
 import tl
-import tl_help
 
 # client
 client = discord.Client()
@@ -21,13 +20,16 @@ async def on_message(message):
     if message.author.bot:
         return
 
+    # contentを空白、改行区切りでsplit
+    content_lines = [ x.split(' ') for x in re.subn('( |　)+', ' ', message.content)[0].split('\n')]
+
     # /nekoコマンド
-    if message.content == '/neko':
-        await neko.do(message)
+    if content_lines[0][0] == '/neko':
+        await neko.exec(message)
 
     # tlコマンド
-    elif message.content.startswith('tl '):
-        await tl.do(message)
+    elif content_lines[0][0] == 'tl':
+        await tl.exec(message, content_lines)
 
 # run nekobot
 client.run(os.getenv('DISCORD_TOKEN'))

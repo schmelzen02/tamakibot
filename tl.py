@@ -1,40 +1,28 @@
-import re
 import datetime
 
-# tlコマンド
-async def do(message):
+# tl command
+async def exec(message, content_lines):
+    print(f'tl command.')
+
     try:
-        print('tlコマンド')
-        command_str = message.content
-        command_str = re.subn('( |　)+', ' ', command_str)[0]
-
-        if not re.match(r'^tl [01]:[0-5][0-9]\n([01]:[0-5][0-9] .+\n?)+$', command_str):
-            raise Exception
-
-        result = ''
-
-        zero_time = str2time('0:00')
-        base_time = str2time('1:30')
-
-        target_time_str = re.search(r'^tl ([01]:[0-9][0-9])', command_str).groups()[0]
+        target_time_str = content_lines[0][1]
         target_time = str2time(target_time_str)
-
         diff_time = base_time - target_time
-        
-        result += target_time_str + 'でのTLにゃ\n```'
 
-        for tl_line in re.findall(r'([01]:[0-9][0-9]) (.+)', command_str):
-            tl_time = str2time(tl_line[0])
+        new_tl = []
+        for x in content_lines[1:]:
+            tmp = x.copy()
+            old_time = str2time(tmp[0])
+            new_time = old_time - diff_time
+            if new_time > zero_time:
+                tmp[0] = time2str(new_time)
+                new_tl.append(tmp)
 
-            new_tl_time = tl_time - diff_time
+        new_tl_str = '\n'.join([' '.join(x) for x in new_tl])
 
-            if (zero_time < new_tl_time):
-                result += time2str(new_tl_time) + ' ' + tl_line[1] + '\n'
-
-        result += '```'
-
-        await message.channel.send(result)
-    except:
+        await message.channel.send(f'{target_time_str}でのTLにゃ\n```{new_tl_str}```')
+    except Exception as e:
+        print(e)
         await message.channel.send('間違ったTLにゃ')
 
 # 文字列 -> datetime
@@ -44,3 +32,6 @@ def str2time(time_str):
 # datetime -> 文字列
 def time2str(time):
     return time.strftime('%#M:%S')
+
+zero_time = str2time('0:00')
+base_time = str2time('1:30')
