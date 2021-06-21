@@ -2,7 +2,7 @@ import datetime
 
 # tl command
 async def exec(message, content_lines):
-    print(f'tl command.')
+    print('tl command.')
 
     try:
         target_time_str = content_lines[0][1]

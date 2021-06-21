@@ -4,9 +4,12 @@ import re
 
 import neko
 import tl
+import battle
 
 # client
-client = discord.Client()
+intents = discord.Intents.default()
+intents.members = True
+client = discord.Client(intents = intents)
 
 # 起動時に動作する処理
 @client.event
@@ -16,20 +19,36 @@ async def on_ready():
 # メッセージ駆動処理
 @client.event
 async def on_message(message):
-    # メッセージ送信者がBotだった場合は無視する
+    # botのメッセージは無視
     if message.author.bot:
         return
 
     # contentを空白、改行区切りでsplit
     content_lines = [ x.split(' ') for x in re.subn('( |　)+', ' ', message.content)[0].split('\n')]
 
-    # /nekoコマンド
     if content_lines[0][0] == '/neko':
+        # /nekoコマンド
         await neko.exec(message)
-
-    # tlコマンド
     elif content_lines[0][0] == 'tl':
+        # tlコマンド
         await tl.exec(message, content_lines)
+    elif content_lines[0][0] == '/battle':
+        await battle.exec(message, content_lines)
+
+@client.event
+async def on_raw_reaction_add(payload):
+    # botのリアクションは無視
+    if payload.member.bot:
+        return
+
+    channel = client.get_channel(payload.channel_id)
+    message = await channel.fetch_message(payload.message_id)
+
+    # タマキbotが追加したメッセージの場合
+    if message.author == client.user:
+        if '#agg' in message.content:
+            # /battle集計対象
+            await battle.aggregate(message)
 
 # run nekobot
 client.run(os.getenv('DISCORD_TOKEN'))
