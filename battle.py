@@ -2,7 +2,14 @@ import discord
 
 import re
 import io
-import asyncio
+
+REACTION_ONE_HALF = '<:zero_half:856912616613085215>'
+REACTION_ONE = '1️⃣'
+REACTION_TWO_HALF = '<:one_half:856912617074065408>'
+REACTION_TWO = '2️⃣'
+REACTION_THREE_HALF = '<:two_half:856912616995946516>'
+REACTION_THREE = '3️⃣'
+REACTION_AGGREGATE = '⚙️'
 
 async def exec(message, content_lines):
     print('battle command.')
@@ -12,96 +19,85 @@ async def exec(message, content_lines):
         if not day in ['1', '2', '3', '4', '5']:
             raise Exception
 
-        await message.channel.send(f'クラバト{day}日目頑張るにゃ\n凸が終わったらスタンプをつけて欲しいにゃ')
+        description = f'クラバト{day}日目頑張るにゃ\n凸が終わったらスタンプをつけて欲しいにゃ　#battle\n'
+        description += '> ' + REACTION_ONE_HALF + '　1凸目持ち越しあり\n'
+        description += '> ' + REACTION_ONE + '　1凸目完了\n'
+        description += '> ' + REACTION_TWO_HALF + '　2凸目持ち越しあり\n'
+        description += '> ' + REACTION_TWO + '　2凸目完了\n'
+        description += '> ' + REACTION_THREE_HALF + '　3凸目持ち越しあり\n'
+        description += '> ' + REACTION_THREE + '　3凸目完了\n'
+        description += '> ' + REACTION_AGGREGATE + '　集計'
 
-        all_members = get_all_members(message)
-
-        agg_target_messages = [
-            await message.channel.send(get_battle_message('1凸目にゃ', all_members)),
-            await message.channel.send(get_battle_message('1凸目の持ち越しにゃ', all_members)),
-            await message.channel.send(get_battle_message('2凸目にゃ', all_members)),
-            await message.channel.send(get_battle_message('2凸目の持ち越しにゃ', all_members)),
-            await message.channel.send(get_battle_message('3凸目にゃ', all_members)),
-            await message.channel.send(get_battle_message('3凸目の持ち越しにゃ', all_members))
-        ]
-
-        for target_message in agg_target_messages:
-            await add_cat_reaction(target_message)
-
-        agg_id_list = ','.join([str(x.id) for x in agg_target_messages])
-
-        aggregate_message = await message.channel.send(f'集計する時はこのメッセージにスタンプをつけて欲しいにゃ　#aggregate\n```[{day}日目,{agg_id_list}]```')
-        await add_cat_reaction(aggregate_message)
+        send_message = await message.channel.send(description)
+        await send_message.add_reaction(REACTION_ONE_HALF)
+        await send_message.add_reaction(REACTION_ONE)
+        await send_message.add_reaction(REACTION_TWO_HALF)
+        await send_message.add_reaction(REACTION_TWO)
+        await send_message.add_reaction(REACTION_THREE_HALF)
+        await send_message.add_reaction(REACTION_THREE)
+        await send_message.add_reaction(REACTION_AGGREGATE)
     except Exception as e:
         print(e)
         await message.channel.send('コマンドが間違ってるにゃ')
 
-async def aggregate_reaction(message):
-    print('battle aggregate.')
-
-    try:
-        target = re.search(r'\[(.+)\]', message.content).group(1).split(',')
-
-        members = filter(lambda x: not x.bot,  message.guild.members)
-        members = {x.discriminator: [ x.name, '-', '-', '-', '-', '-', '-' ] for x in members }
-
-        day = target[0]
-
-        for i in range(1, 7):
-            await aggregate(message.channel, members, target, i)
-    
-        csv = 'プレイヤー名,1凸目,1凸目持ち越し,2凸目,2凸目持ち越し,3凸目,3凸目持ち越し\n' + '\n'.join([ ','.join(member) for member in members.values()])
-        
-        with io.StringIO(csv) as bs:
-            send_message = await message.channel.send(f'{day}を集計したにゃ', file=discord.File(bs, f'{day}.csv'))
-            await send_message.delete(delay=60)
-    except Exception as e:
-        print(e)
-        message.channel.send('集計に失敗したにゃ...')
-
-async def battle_reaction(message):
+async def battle_reaction(payload, message):
     print('battle reaction.')
 
-    title = re.search(r'(.+)　#battle', message.content).group(1)
+    if payload.emoji.name == REACTION_AGGREGATE:
+        await aggregate(message)
+    else:
+        await unify(payload, message)
 
-    non_reaction_members = await get_non_reaction_members(message)
-
-    await message.edit(content = get_battle_message(title, non_reaction_members))
-
-async def add_cat_reaction(message):
-    try:
-        await message.add_reaction('<:tamaki:787338723188277258>')
-    except:
-        try:
-            await message.add_reaction('<:tamaki:856169668507467788>')
-        except:
-            await message.add_reaction('\N{Cat Face with Wry Smile}')
-
-async def aggregate(channel, members, target, i):
-    message = await channel.fetch_message(target[i])
+async def unify(payload, message):
+    print('unify.')
 
     for reaction in message.reactions:
+        if reaction.emoji in [ payload.emoji, payload.emoji.name, REACTION_AGGREGATE ]:
+            continue
+
         async for user in reaction.users():
-            if user.discriminator in members:
-                members[user.discriminator][i] = '済'
+            if user == payload.member:
+                await message.remove_reaction(reaction.emoji, user)
+
+async def aggregate(message):
+    print('aggregate.')
+
+    all_members = get_all_members(message)
+
+    members = { member.discriminator: [ member.name ] for member in all_members }
+
+    for reaction in message.reactions:
+        if reaction.emoji == REACTION_AGGREGATE:
+            continue
+
+        emoji = str(reaction.emoji)
+        state = [ '', '', '' ]
+        if emoji == REACTION_ONE_HALF:
+            state = [ '持ち越し', '', '' ]
+        elif emoji == REACTION_ONE:
+            state = [ '済', '', '' ]
+        elif emoji == REACTION_TWO_HALF:
+            state = [ '済', '持ち越し', '' ]
+        elif emoji == REACTION_TWO:
+            state = [ '済', '済', '' ]
+        elif emoji == REACTION_THREE_HALF:
+            state = [ '済', '済', '持ち越し' ]
+        elif emoji == REACTION_THREE:
+            state = [ '済', '済', '済' ]
+
+        async for user in reaction.users():
+            if not user.discriminator in members:
+                continue
+
+            members[user.discriminator].extend(state)
+
+    target = re.search(r'クラバト(.)日目', message.content).group(1)
+
+    csv = 'プレイヤー名,1凸目,2凸目,3凸目\n' + '\n'.join([ ','.join(member) for member in members.values()])
+
+    with io.StringIO(csv) as bs:
+        send_message = await message.channel.send(f'クラバト{target}日目を集計したにゃ', file=discord.File(bs, f'clan_battle_{target}.csv'))
+        await send_message.delete(delay=60)
 
 def get_all_members(message):
     return list(filter(lambda x: not x.bot,  message.guild.members))
-
-async def get_non_reaction_members(message):
-    all_members = set(get_all_members(message))
-
-    reaction_members = set()
-    for reaction in message.reactions:
-        async for user in reaction.users():
-            reaction_members.add(user)
-    
-    return list(all_members - reaction_members)
-
-def get_battle_message(title, members):
-    members_str = ' '.join([ member.name for member in members ])
-
-    if not members_str:
-        members_str = '全員終わったにゃ！'
-
-    return f'{title}　#battle```{members_str}```'
