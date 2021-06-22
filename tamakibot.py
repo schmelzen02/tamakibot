@@ -47,22 +47,17 @@ async def on_raw_reaction_add(payload):
     # タマキbotが追加したメッセージの場合
     if message.author == client.user:
         if '#battle' in message.content:
-            # 
-            await battle.battle_reaction(message)
+            await battle.battle_reaction(payload, message)
 
-        elif '#aggregate' in message.content:
-            # 集計
-            await battle.aggregate_reaction(message)
-
-@client.event
-async def on_raw_reaction_remove(payload):
-    channel = client.get_channel(payload.channel_id)
-    message = await channel.fetch_message(payload.message_id)
-
-    # タマキbotが追加したメッセージの場合
-    if message.author == client.user:
-        if '#battle' in message.content:
-            await battle.battle_reaction(message)
+# @client.event
+# async def on_raw_reaction_remove(payload):
+#     channel = client.get_channel(payload.channel_id)
+#     message = await channel.fetch_message(payload.message_id)
+#     print(payload)
+#     # タマキbotが追加したメッセージの場合
+#     if message.author == client.user:
+#         if '#battle' in message.content:
+#             await battle.battle_reaction(message)
 
 # run nekobot
 client.run(os.getenv('DISCORD_TOKEN'))
