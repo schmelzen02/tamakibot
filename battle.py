@@ -65,6 +65,7 @@ async def aggregate(message):
     all_members = get_all_members(message)
 
     members = { str(member.id): [ member.name ] for member in all_members }
+    print(members)
 
     for reaction in message.reactions:
         if reaction.emoji == REACTION_AGGREGATE:
@@ -86,6 +87,7 @@ async def aggregate(message):
             state = [ '済', '済', '済' ]
 
         async for user in reaction.users():
+            print(str(user.id))
             if str(user.id) in members:
                 members[str(user.id)].extend(state)
 
