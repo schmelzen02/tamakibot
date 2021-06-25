@@ -86,10 +86,8 @@ async def aggregate(message):
             state = [ '済', '済', '済' ]
 
         async for user in reaction.users():
-            if not str(user.id) in members:
-                continue
-
-            members[str(user.id)].extend(state)
+            if str(user.id) in members:
+                members[str(user.id)].extend(state)
 
     target = re.search(r'クラバト(.)日目', message.content).group(1)
 
