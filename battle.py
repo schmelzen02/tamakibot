@@ -64,7 +64,7 @@ async def aggregate(message):
 
     all_members = get_all_members(message)
 
-    members = { member.discriminator: [ member.name ] for member in all_members }
+    members = { str(member.id): [ member.name ] for member in all_members }
 
     for reaction in message.reactions:
         if reaction.emoji == REACTION_AGGREGATE:
@@ -86,10 +86,10 @@ async def aggregate(message):
             state = [ '済', '済', '済' ]
 
         async for user in reaction.users():
-            if not user.discriminator in members:
+            if not str(user.id) in members:
                 continue
 
-            members[user.discriminator].extend(state)
+            members[str(user.id)].extend(state)
 
     target = re.search(r'クラバト(.)日目', message.content).group(1)
 
