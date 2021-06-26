@@ -68,6 +68,7 @@ async def aggregate(message):
     print(members)
 
     for reaction in message.reactions:
+        print(reaction)
         if reaction.emoji == REACTION_AGGREGATE:
             continue
 
