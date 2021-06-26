@@ -41,7 +41,7 @@ async def on_raw_reaction_add(payload):
     if payload.member.bot:
         return
 
-    channel = client.get_channel(payload.channel_id)
+    channel = await client.fetch_channel(payload.channel_id)
     message = await channel.fetch_message(payload.message_id)
 
     # タマキbotが追加したメッセージの場合
