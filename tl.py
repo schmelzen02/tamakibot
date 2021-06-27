@@ -21,7 +21,7 @@ async def exec(message, content_lines):
         new_tl_str = '\n'.join([' '.join(x) for x in new_tl])
 
         send_message = await message.channel.send(f'{target_time_str}でのTLにゃ\n```{new_tl_str}```')
-        // await send_message.delete(delay=60)
+        # await send_message.delete(delay=60)
     except Exception as e:
         print(e)
         await message.channel.send('間違ったTLにゃ')
