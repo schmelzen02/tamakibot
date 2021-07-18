@@ -64,32 +64,31 @@ async def aggregate(message):
 
     all_members = get_all_members(message)
 
-    members = { member.discriminator: [ member.name ] for member in all_members }
+    members = { member.discriminator: [ member.name, '-', '-', '-' ] for member in all_members }
 
     for reaction in message.reactions:
         if reaction.emoji == REACTION_AGGREGATE:
             continue
 
         emoji = str(reaction.emoji)
-        state = [ '', '', '' ]
-        if emoji == REACTION_ONE and state[0] == '':
-            state[0] = '持ち越し'
-        elif emoji == REACTION_ONE_HALF:
-            state[0] = '済'
-        elif emoji == REACTION_TWO and state[1] == '':
-            state[1] = '持ち越し'
-        elif emoji == REACTION_TWO_HALF:
-            state[1] = '済'
-        elif emoji == REACTION_THREE and state[2] == '':
-            state[2] = '持ち越し'
-        elif emoji == REACTION_THREE_HALF:
-            state[2] = '済'
 
         async for user in reaction.users():
             if not user.discriminator in members:
                 continue
 
-            members[user.discriminator].extend(state)
+            state = members[user.discriminator]
+            if emoji == REACTION_ONE and state[1] == '-':
+                state[1] = '持ち越し'
+            elif emoji == REACTION_ONE_HALF:
+                state[1] = '済'
+            elif emoji == REACTION_TWO and state[2] == '-':
+                state[2] = '持ち越し'
+            elif emoji == REACTION_TWO_HALF:
+                state[2] = '済'
+            elif emoji == REACTION_THREE and state[3] == '-':
+                state[3] = '持ち越し'
+            elif emoji == REACTION_THREE_HALF:
+                state[3] = '済'
 
     target = re.search(r'クラバト(.)日目', message.content).group(1)
 
