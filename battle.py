@@ -51,45 +51,52 @@ async def battle_reaction(payload, message):
 async def unify(payload, message):
     print('unify.')
 
-    for reaction in message.reactions:
-        if reaction.emoji in [ payload.emoji, payload.emoji.name, REACTION_AGGREGATE ]:
-            continue
+    member = payload.member
+    emoji = str(payload.emoji)
 
-        async for user in reaction.users():
-            if user == payload.member:
-                await message.remove_reaction(reaction.emoji, user)
+    if emoji == REACTION_ONE:
+        await message.remove_reaction(REACTION_ONE_HALF, member)
+    if emoji == REACTION_ONE_HALF:
+        await message.remove_reaction(REACTION_ONE, member)
+    elif emoji == REACTION_TWO:
+        await message.remove_reaction(REACTION_TWO_HALF, member)
+    elif emoji == REACTION_TWO_HALF:
+        await message.remove_reaction(REACTION_TWO, member)
+    elif emoji == REACTION_THREE:
+        await message.remove_reaction(REACTION_THREE_HALF, member)
+    elif emoji == REACTION_THREE_HALF:
+        await message.remove_reaction(REACTION_THREE, member)
 
 async def aggregate(message):
     print('aggregate.')
 
     all_members = get_all_members(message)
 
-    members = { member.discriminator: [ member.name ] for member in all_members }
+    members = { member.discriminator: [ member.name, '-', '-', '-' ] for member in all_members }
 
     for reaction in message.reactions:
         if reaction.emoji == REACTION_AGGREGATE:
             continue
 
         emoji = str(reaction.emoji)
-        state = [ '', '', '' ]
-        if emoji == REACTION_ONE_HALF:
-            state = [ '持ち越し', '', '' ]
-        elif emoji == REACTION_ONE:
-            state = [ '済', '', '' ]
-        elif emoji == REACTION_TWO_HALF:
-            state = [ '済', '持ち越し', '' ]
-        elif emoji == REACTION_TWO:
-            state = [ '済', '済', '' ]
-        elif emoji == REACTION_THREE_HALF:
-            state = [ '済', '済', '持ち越し' ]
-        elif emoji == REACTION_THREE:
-            state = [ '済', '済', '済' ]
 
         async for user in reaction.users():
             if not user.discriminator in members:
                 continue
 
-            members[user.discriminator].extend(state)
+            state = members[user.discriminator]
+            if emoji == REACTION_ONE_HALF and state[1] == '-':
+                state[1] = '持ち越し'
+            elif emoji == REACTION_ONE:
+                state[1] = '済'
+            elif emoji == REACTION_TWO_HALF and state[2] == '-':
+                state[2] = '持ち越し'
+            elif emoji == REACTION_TWO:
+                state[2] = '済'
+            elif emoji == REACTION_THREE_HALF and state[3] == '-':
+                state[3] = '持ち越し'
+            elif emoji == REACTION_THREE:
+                state[3] = '済'
 
     target = re.search(r'クラバト(.)日目', message.content).group(1)
 
