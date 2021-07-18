@@ -3,12 +3,12 @@ import discord
 import re
 import io
 
-REACTION_ONE_HALF = '<:zero_half:856912616613085215>'
 REACTION_ONE = '1️⃣'
-REACTION_TWO_HALF = '<:one_half:856912617074065408>'
-REACTION_TWO = '2️⃣'
-REACTION_THREE_HALF = '<:two_half:856912616995946516>'
-REACTION_THREE = '3️⃣'
+REACTION_ONE_HALF = '2️⃣'
+REACTION_TWO = '3️⃣'
+REACTION_TWO_HALF = '4️⃣'
+REACTION_THREE = '5️⃣'
+REACTION_THREE_HALF = '6️⃣'
 REACTION_AGGREGATE = '⚙️'
 
 async def exec(message, content_lines):
@@ -19,22 +19,22 @@ async def exec(message, content_lines):
         if not day in ['1', '2', '3', '4', '5']:
             raise Exception
 
-        description = f'クラバト{day}日目頑張るにゃ\n凸が終わったらスタンプをつけて欲しいにゃ　#battle\n'
-        description += '> ' + REACTION_ONE_HALF + '　1凸目持ち越しあり\n'
-        description += '> ' + REACTION_ONE + '　1凸目完了\n'
-        description += '> ' + REACTION_TWO_HALF + '　2凸目持ち越しあり\n'
-        description += '> ' + REACTION_TWO + '　2凸目完了\n'
-        description += '> ' + REACTION_THREE_HALF + '　3凸目持ち越しあり\n'
-        description += '> ' + REACTION_THREE + '　3凸目完了\n'
+        description = f'クラバト{day}日目頑張るにゃ\n終わったところのスタンプをつけて欲しいにゃ　#battle\n'
+        description += '> ' + REACTION_ONE + '　1凸目\n'
+        description += '> ' + REACTION_ONE_HALF + '　1凸目持ち越し\n'
+        description += '> ' + REACTION_TWO + '　2凸目\n'
+        description += '> ' + REACTION_TWO_HALF + '　2凸目持ち越し\n'
+        description += '> ' + REACTION_THREE + '　3凸目\n'
+        description += '> ' + REACTION_THREE_HALF + '　3凸目持ち越し\n'
         description += '> ' + REACTION_AGGREGATE + '　集計'
 
         send_message = await message.channel.send(description)
-        await send_message.add_reaction(REACTION_ONE_HALF)
         await send_message.add_reaction(REACTION_ONE)
-        await send_message.add_reaction(REACTION_TWO_HALF)
+        await send_message.add_reaction(REACTION_ONE_HALF)
         await send_message.add_reaction(REACTION_TWO)
-        await send_message.add_reaction(REACTION_THREE_HALF)
+        await send_message.add_reaction(REACTION_TWO_HALF)
         await send_message.add_reaction(REACTION_THREE)
+        await send_message.add_reaction(REACTION_THREE_HALF)
         await send_message.add_reaction(REACTION_AGGREGATE)
     except Exception as e:
         print(e)
@@ -45,19 +45,19 @@ async def battle_reaction(payload, message):
 
     if payload.emoji.name == REACTION_AGGREGATE:
         await aggregate(message)
-    else:
-        await unify(payload, message)
+    # else:
+    #     await unify(payload, message)
 
-async def unify(payload, message):
-    print('unify.')
+# async def unify(payload, message):
+#     print('unify.')
 
-    for reaction in message.reactions:
-        if reaction.emoji in [ payload.emoji, payload.emoji.name, REACTION_AGGREGATE ]:
-            continue
+#     for reaction in message.reactions:
+#         if reaction.emoji in [ payload.emoji, payload.emoji.name, REACTION_AGGREGATE ]:
+#             continue
 
-        async for user in reaction.users():
-            if user == payload.member:
-                await message.remove_reaction(reaction.emoji, user)
+#         async for user in reaction.users():
+#             if user == payload.member:
+#                 await message.remove_reaction(reaction.emoji, user)
 
 async def aggregate(message):
     print('aggregate.')
@@ -72,18 +72,18 @@ async def aggregate(message):
 
         emoji = str(reaction.emoji)
         state = [ '', '', '' ]
-        if emoji == REACTION_ONE_HALF:
-            state = [ '持ち越し', '', '' ]
-        elif emoji == REACTION_ONE:
-            state = [ '済', '', '' ]
+        if emoji == REACTION_ONE and state[0] == '':
+            state[0] = '持ち越し'
+        elif emoji == REACTION_ONE_HALF:
+            state[0] = '済'
+        elif emoji == REACTION_TWO and state[1] == '':
+            state[1] = '持ち越し'
         elif emoji == REACTION_TWO_HALF:
-            state = [ '済', '持ち越し', '' ]
-        elif emoji == REACTION_TWO:
-            state = [ '済', '済', '' ]
+            state[1] = '済'
+        elif emoji == REACTION_THREE and state[2] == '':
+            state[2] = '持ち越し'
         elif emoji == REACTION_THREE_HALF:
-            state = [ '済', '済', '持ち越し' ]
-        elif emoji == REACTION_THREE:
-            state = [ '済', '済', '済' ]
+            state[2] = '済'
 
         async for user in reaction.users():
             if not user.discriminator in members:
